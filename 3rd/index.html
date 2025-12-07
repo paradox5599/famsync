@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Family Sync</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tabletop.js for Google Sheets -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js"></script>
+  <style>
+    body { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
+    .app-wrapper { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .focus-outline:focus-visible { outline: 2px solid #1f2937; outline-offset: 2px; }
+    /* small editor styles */
+    .admin-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display:flex; align-items:center; justify-content:center; }
+    .admin-card { width: 92%; max-width:920px; max-height:90vh; overflow:auto; background:#fff; color:#111; border-radius:12px; padding:16px; box-shadow: 0 8px 30px rgba(2,6,23,0.4); }
+    .admin-row { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+    .admin-row label { width:170px; font-size:13px; color:#374151; }
+    .admin-row input, .admin-row textarea { flex:1; padding:8px; border:1px solid #e5e7eb; border-radius:6px; font-size:13px; }
+    .admin-actions { display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
+    .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; }
+  </style>
+</head>
+<body class="h-full w-full">
+  <div id="app-root" class="app-wrapper h-full w-full flex items-center justify-center bg-[#e0e7ec]">
+    <div class="main-content w-full max-w-sm h-full max-h-[640px] bg-[#f6f1e6] rounded-3xl shadow-xl flex flex-col overflow-hidden border border-[#c6d0d8]" role="application" aria-label="Family Sync">
+
+      <!-- Header -->
+      <header class="flex-shrink-0 px-4 pt-4 pb-3 border-b border-[#c6d0d8] bg-[#e7f0ef]">
+        <div class="flex items-center justify-between">
+          <div class="flex flex-col">
+            <h1 id="home-title" class="text-lg font-semibold tracking-tight text-[#1f2933]">Family Sync</h1>
+            <p id="home-subtitle" class="mt-1 text-xs text-[#374151] leading-snug">Welcome! Please use your browser's translate feature.</p>
+          </div>
+          <div class="ml-3 inline-flex items-center justify-center rounded-2xl bg-[#b7d3d7] px-3 py-1">
+            <div class="flex items-center space-x-1"><span id="grade-level" class="text-[10px] font-semibold uppercase tracking-wide text-[#102a43]"> Grade 6 </span></div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main content -->
+      <main id="main-content" class="flex-1 overflow-y-auto px-4 pb-4 pt-3">
+        <!-- Home -->
+        <section id="page-home" aria-label="Home" class="space-y-4">
+          <!-- Featured Photo -->
+          <div class="rounded-2xl bg-[#d4dde6] border border-[#c6d0d8] p-3">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="text-sm font-semibold text-[#1f2933]">Weekly Featured Photo</h2>
+            </div>
+            <div id="featured-image-container" class="w-full rounded-xl bg-[#b7c7d6] h-40 flex items-center justify-center text-xs text-[#102a43] text-center px-3 overflow-hidden" role="img" aria-label="Featured photo area">
+              <p id="featured-placeholder" class="text-xs text-[#102a43]">Paste an image URL in the sheet to display your photo here.</p>
+              <img id="featured-image" src="" alt="Featured classroom photo" class="hidden w-full h-full object-cover rounded-xl">
+            </div>
+            <p id="featured-caption" class="mt-2 text-[11px] text-[#374151] leading-snug">Families can see a highlight from our classroom each week.</p>
+          </div>
+
+          <!-- Quick nav -->
+          <div class="space-y-3" aria-label="Main sections">
+            <button type="button" class="w-full flex items-center justify-between rounded-2xl bg-[#c5ded8] px-3 py-3 focus-outline" data-target="weekly">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-[#a5c6bf] flex items-center justify-center"><span class="text-xs text-[#0b1f33] font-semibold">Wk</span></div>
+                <div class="text-left">
+                  <p id="weekly-digest-title-home" class="text-sm font-semibold text-[#102a43]">Weekly Digest</p>
+                  <p class="text-[11px] text-[#374151]">See this week's learning and family tips.</p>
+                </div>
+              </div>
+              <span class="text-xs text-[#1f2933] font-semibold">&gt;</span>
+            </button>
+
+            <button type="button" class="w-full flex items-center justify-between rounded-2xl bg-[#d4decf] px-3 py-3 focus-outline" data-target="resources">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-[#b0c4a3] flex items-center justify-center"><span class="text-xs text-[#0b1f33] font-semibold">R</span></div>
+                <div class="text-left">
+                  <p id="resources-title-home" class="text-sm font-semibold text-[#102a43]">Resources &amp; Links</p>
+                  <p class="text-[11px] text-[#374151]">Quick access to classroom tools and school info.</p>
+                </div>
+              </div>
+              <span class="text-xs text-[#1f2933] font-semibold">&gt;</span>
+            </button>
+
+            <button type="button" class="w-full flex items-center justify-between rounded-2xl bg-[#e3d8c7] px-3 py-3 focus-outline" data-target="home">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-[#d0c0a6] flex items-center justify-center"><span class="text-xs text-[#0b1f33] font-semibold">FAQ</span></div>
+                <div class="text-left">
+                  <p class="text-sm font-semibold text-[#102a43]">What is this hub?</p>
+                  <p class="text-[11px] text-[#374151]">A simple place for families to see what we're learning each week.</p>
+                </div>
+              </div>
+              <span class="text-xs text-[#1f2933] font-semibold">&gt;</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Weekly -->
+        <section id="page-weekly" aria-label="Weekly Digest" class="hidden space-y-3">
+          <h2 id="weekly-digest-title" class="text-base font-semibold text-[#102a43]">Weekly Digest</h2>
+          <p class="text-[11px] text-[#374151] mb-1">Scroll through recent weeks to see what we are working on, how students are learning, and simple ways to support learning at home.</p>
+
+          <article class="rounded-2xl bg-[#e7f0ef] border border-[#c6d0d8] p-3 space-y-2">
+            <header class="flex items-center justify-between">
+              <div>
+                <h3 id="week1-date" class="text-sm font-semibold text-[#102a43]">Week of March 3</h3>
+                <p id="week1-topic" class="text-[11px] text-[#4b5563]">Fractions &amp; Comparing Texts</p>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#c5ded8] text-[#0b1f33] font-medium"> Most Recent </span>
+            </header>
+
+            <section class="rounded-xl bg-[#c5ded8] px-3 py-2">
+              <h4 class="text-xs font-semibold text-[#0b1f33] mb-1">This Week's Big Idea</h4>
+              <p id="week1-big-idea" class="text-[11px] text-[#102a43] leading-snug">Students are learning to compare fractions using visual models and to notice how two texts can share a theme but present it in different ways.</p>
+            </section>
+
+            <section class="rounded-xl bg-[#d4dde6] px-3 py-2">
+              <h4 class="text-xs font-semibold text-[#0b1f33] mb-1">Evidence of Learning</h4>
+              <p id="week1-evidence" class="text-[11px] text-[#102a43] leading-snug">In class, students are building fraction strips, discussing reading in small groups, and completing short exit tickets to show what they understand.</p>
+            </section>
+
+            <section class="rounded-xl bg-[#d4decf] px-3 py-2">
+              <h4 class="text-xs font-semibold text-[#0b1f33] mb-1">Practice at Home</h4>
+              <p id="week1-practice" class="text-[11px] text-[#102a43] leading-snug">At dinner, ask your child to show you two different ways to represent the same fraction. When you read together, ask, "What is the big message of this story?"</p>
+            </section>
+
+            <section class="rounded-xl bg-[#e3d8c7] px-3 py-2">
+              <h4 class="text-xs font-semibold text-[#0b1f33] mb-1">Important Logistics</h4>
+              <p id="week1-logistics" class="text-[11px] text-[#102a43] leading-snug">Fraction quiz on Friday. Library day is Thursday – please return books. Family conference sign-ups open next week.</p>
+            </section>
+          </article>
+        </section>
+
+        <!-- Resources -->
+        <section id="page-resources" aria-label="Resources and Links" class="hidden space-y-3">
+          <h2 id="resources-title" class="text-base font-semibold text-[#102a43]">Resources &amp; Links</h2>
+          <p class="text-[11px] text-[#374151] mb-1">Use these quick links to access our class tools and school information. Links open in a new tab.</p>
+
+          <div class="space-y-2">
+            <a id="resource1-link" href="#" target="_blank" rel="noopener noreferrer" class="block rounded-2xl bg-[#c5ded8] px-3 py-3 focus-outline">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-[#a5c6bf] flex items-center justify-center">
+                  <span class="text-xs text-[#0b1f33] font-semibold">1</span>
+                </div>
+                <div>
+                  <p id="resource1-title" class="text-sm font-semibold text-[#102a43]">Google Classroom Login</p>
+                  <p id="resource1-description" class="text-[11px] text-[#374151]">Check assignments and class announcements.</p>
+                </div>
+              </div>
+            </a>
+
+            <a id="resource2-link" href="#" target="_blank" rel="noopener noreferrer" class="block rounded-2xl bg-[#d4dde6] px-3 py-3 focus-outline">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-[#b7c7d6] flex items-center justify-center">
+                  <span class="text-xs text-[#0b1f33] font-semibold">2</span>
+                </div>
+                <div>
+                  <p id="resource2-title" class="text-sm font-semibold text-[#102a43]">School Calendar</p>
+                  <p id="resource2-description" class="text-[11px] text-[#374151]">View holidays, events, and important dates.</p>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <div class="rounded-2xl bg-[#d4decf] px-3 py-3">
+            <div class="flex items-start space-x-3">
+              <div class="w-8 h-8 rounded-full bg-[#b0c4a3] flex items-center justify-center">
+                <span class="text-xs text-[#0b1f33] font-semibold">C</span>
+              </div>
+              <div class="flex-1">
+                <p id="contact-text" class="text-sm font-semibold text-[#102a43]">Contact Teacher Form</p>
+                <p id="contact-description" class="text-[11px] text-[#374151] mb-1.5">Link this section to your preferred contact form or email.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-[#e3d8c7] px-3 py-3">
+            <p class="text-[11px] text-[#4b5563] leading-snug">Tip: Families can use their browser or device translation tool to read this page in their preferred language.</p>
+          </div>
+        </section>
+      </main>
+
+      <!-- Footer nav -->
+      <footer class="flex-shrink-0 border-t border-[#c6d0d8] bg-[#e7f0ef]" aria-label="Primary navigation">
+        <nav class="flex">
+          <button type="button" class="flex-1 flex flex-col items-center justify-center py-2 text-[11px] font-medium text-[#4b5563] focus-outline" data-target="home" aria-label="Home">
+            <span class="w-7 h-1 rounded-full mb-1.5 bg-transparent" data-underline="home"></span> <span>Home</span>
+          </button>
+          <button type="button" class="flex-1 flex flex-col items-center justify-center py-2 text-[11px] font-medium text-[#4b5563] focus-outline" data-target="weekly" aria-label="Weekly Digest">
+            <span class="w-7 h-1 rounded-full mb-1.5 bg-transparent" data-underline="weekly"></span> <span>Weekly Digest</span>
+          </button>
+          <button type="button" class="flex-1 flex flex-col items-center justify-center py-2 text-[11px] font-medium text-[#4b5563] focus-outline" data-target="resources" aria-label="Resources and Links">
+            <span class="w-7 h-1 rounded-full mb-1.5 bg-transparent" data-underline="resources"></span> <span>Resources</span>
+          </button>
+        </nav>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- SPA navigation script -->
+  <script>
+    (function () {
+      const pages = { home: document.getElementById("page-home"), weekly: document.getElementById("page-weekly"), resources: document.getElementById("page-resources") };
+      const underlineMap = { home: document.querySelector('[data-underline="home"]'), weekly: document.querySelector('[data-underline="weekly"]'), resources: document.querySelector('[data-underline="resources"]') };
+      const navButtons = document.querySelectorAll('[data-target]');
+
+      function setActivePage(target) {
+        Object.keys(pages).forEach((key) => pages[key] && (key === target ? pages[key].classList.remove("hidden") : pages[key].classList.add("hidden")));
+        Object.keys(underlineMap).forEach((key) => {
+          const el = underlineMap[key];
+          if (!el) return;
+          el.classList.toggle("bg-[#7fa2b2]", key === target);
+        });
+      }
+
+      navButtons.forEach(btn => btn.addEventListener("click", function (e) { e.preventDefault(); setActivePage(this.getAttribute("data-target")); }));
+      document.querySelectorAll("#page-home [data-target]").forEach(btn => btn.addEventListener("click", function (e) { e.preventDefault(); setActivePage(this.getAttribute("data-target")); }));
+
+      setActivePage("home");
+    })();
+  </script>
+
+  <!-- Load content from YOUR published Google Sheet -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+
+  Tabletop.init({
+    key: 'YOUR_CSV_LINK_HERE', // <-- use the CSV link from step 1
+    simpleSheet: true,
+    callback: function(data) {
+      console.log("Sheet data:", data);
+
+      if (!data || data.length === 0) return;
+      const row = data[0]; // first row of your sheet
+
+      // Featured
+      const featuredImage = document.getElementById('featured-image');
+      const featuredPlaceholder = document.getElementById('featured-placeholder');
+      if (row.featured_image_url) {
+        featuredImage.src = row.featured_image_url;
+        featuredImage.classList.remove('hidden');
+        featuredPlaceholder.style.display = 'none';
+      } else {
+        featuredImage.classList.add('hidden');
+        featuredPlaceholder.style.display = 'block';
+      }
+      if (row.featured_caption) document.getElementById('featured-caption').textContent = row.featured_caption;
+
+      // Weekly
+      const weekMap = ['week1-date','week1-topic','week1-big-idea','week1-evidence','week1-practice','week1-logistics'];
+      const weekKeys = ['week_date','week_topic','week_big_idea','week_evidence','week_practice','week_logistics'];
+      weekMap.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el && row[weekKeys[i]]) el.textContent = row[weekKeys[i]];
+      });
+
+      // Resources
+      for (let i=1; i<=2; i++) {
+        const title = document.getElementById(`resource${i}-title`);
+        const desc = document.getElementById(`resource${i}-description`);
+        const link = document.getElementById(`resource${i}-link`);
+        if (title && row[`resource${i}_title`]) title.textContent = row[`resource${i}_title`];
+        if (desc && row[`resource${i}_description`]) desc.textContent = row[`resource${i}_description`];
+        if (link && row[`resource${i}_url`]) link.href = row[`resource${i}_url`];
+      }
+
+      // Contact & misc
+      if (row.contact_text) document.getElementById('contact-text').textContent = row.contact_text;
+      if (row.contact_description) document.getElementById('contact-description').textContent = row.contact_description;
+      if (row.grade_level) document.getElementById('grade-level').textContent = row.grade_level;
+      if (row.home_subtitle) document.getElementById('home-subtitle').textContent = row.home_subtitle;
+      if (row.home_title) document.getElementById('home-title').textContent = row.home_title;
+
+    }
+  });
+
+});
+</script>
+
+  <!-- Hidden admin panel (tap title 5x) -->
+  <script>
+    // NOTE: This panel edits the page locally and copies a CSV row you can paste into your sheet.
+    let tapCount = 0;
+    const tapThreshold = 5;
+    const unlockTime = 3000;
+    let lastTap = Date.now();
+    const adminSecret = document.getElementById("home-title");
+    const ADMIN_PASSWORD = "mypassword"; // change if you want
+
+    adminSecret.addEventListener("click", () => {
+      const now = Date.now();
+      if (now - lastTap > unlockTime) tapCount = 0;
+      tapCount++; lastTap = now;
+      if (tapCount >= tapThreshold) {
+        tapCount = 0;
+        const password = prompt("Enter admin password:");
+        if (password !== ADMIN_PASSWORD) { alert("Wrong password"); return; }
+        openAdminPanel();
+      }
+    });
+
+    function openAdminPanel(){
+      // build overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'admin-overlay';
+      const card = document.createElement('div');
+      card.className = 'admin-card';
+
+      // helper to get current values
+      const getVal = (id) => (document.getElementById(id) ? document.getElementById(id).textContent : '');
+      const getImgSrc = (id) => (document.getElementById(id) ? document.getElementById(id).src : '');
+
+      // Build inner HTML (inputs for main fields)
+      card.innerHTML = `
+        <h3 style="margin-top:0; margin-bottom:8px;">Edit Family Sync (local preview)</h3>
+        <div style="border-top:1px solid #e6e6e6; padding-top:10px;">
+          <div class="admin-row"><label>Featured image URL</label><input id="admin_featured_image_url" type="text" value="${getImgSrc('featured-image') || ''}" /></div>
+          <div class="admin-row"><label>Featured caption</label><input id="admin_featured_caption" type="text" value="${getVal('featured-caption') || ''}" /></div>
+          <div style="height:8px"></div>
+          <h4 style="margin:6px 0;">Weekly digest</h4>
+          <div class="admin-row"><label>Week date</label><input id="admin_week_date" type="text" value="${getVal('week1-date') || ''}" /></div>
+          <div class="admin-row"><label>Week topic</label><input id="admin_week_topic" type="text" value="${getVal('week1-topic') || ''}" /></div>
+          <div class="admin-row"><label>Big idea</label><textarea id="admin_week_big" rows="2">${getVal('week1-big-idea') || ''}</textarea></div>
+          <div class="admin-row"><label>Evidence</label><textarea id="admin_week_evidence" rows="2">${getVal('week1-evidence') || ''}</textarea></div>
+          <div class="admin-row"><label>Practice</label><textarea id="admin_week_practice" rows="2">${getVal('week1-practice') || ''}</textarea></div>
+          <div class="admin-row"><label>Logistics</label><textarea id="admin_week_logistics" rows="2">${getVal('week1-logistics') || ''}</textarea></div>
+
+          <div style="height:8px"></div>
+          <h4 style="margin:6px 0;">Resources</h4>
+          <div class="admin-row"><label>Resource 1 title</label><input id="admin_r1_title" type="text" value="${getVal('resource1-title') || ''}" /></div>
+          <div class="admin-row"><label>Resource 1 description</label><input id="admin_r1_desc" type="text" value="${getVal('resource1-description') || ''}" /></div>
+          <div class="admin-row"><label>Resource 1 URL</label><input id="admin_r1_url" type="text" value="${document.getElementById('resource1-link') ? document.getElementById('resource1-link').href : ''}" /></div>
+
+          <div class="admin-row"><label>Resource 2 title</label><input id="admin_r2_title" type="text" value="${getVal('resource2-title') || ''}" /></div>
+          <div class="admin-row"><label>Resource 2 description</label><input id="admin_r2_desc" type="text" value="${getVal('resource2-description') || ''}" /></div>
+          <div class="admin-row"><label>Resource 2 URL</label><input id="admin_r2_url" type="text" value="${document.getElementById('resource2-link') ? document.getElementById('resource2-link').href : ''}" /></div>
+
+          <div style="height:8px"></div>
+          <h4 style="margin:6px 0;">Contact & misc</h4>
+          <div class="admin-row"><label>Contact text</label><input id="admin_contact_text" type="text" value="${getVal('contact-text') || ''}" /></div>
+          <div class="admin-row"><label>Contact desc</label><input id="admin_contact_desc" type="text" value="${getVal('contact-description') || ''}" /></div>
+          <div class="admin-row"><label>Grade level</label><input id="admin_grade_level" type="text" value="${getVal('grade-level') || ''}" /></div>
+          <div class="admin-row"><label>Home subtitle</label><input id="admin_home_subtitle" type="text" value="${getVal('home-subtitle') || ''}" /></div>
+        </div>
+
+        <div class="admin-actions">
+          <button id="admin_apply" class="btn" style="background:#10b981; color:#fff;">Apply Locally</button>
+          <button id="admin_copy" class="btn" style="background:#3b82f6; color:#fff;">Copy Row for Sheet</button>
+          <button id="admin_close" class="btn" style="background:#ef4444; color:#fff;">Close</button>
+        </div>
+
+        <p style="margin-top:10px; font-size:12px; color:#374151;">
+          <strong>How to publish:</strong> After clicking <em>Copy Row for Sheet</em>, paste the row into the next empty row in your Google Sheet, then publish or wait (published sheets update automatically). Parents will see the changes when they reload.
+        </p>
+      `;
+
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+
+      // event handlers
+      document.getElementById('admin_close').onclick = () => overlay.remove();
+
+      document.getElementById('admin_apply').onclick = () => {
+        // apply locally to page elements
+        const fUrl = document.getElementById('admin_featured_image_url').value.trim();
+        const fCap = document.getElementById('admin_featured_caption').value;
+
+        if (fUrl) {
+          const img = document.getElementById('featured-image');
+          img.src = fUrl;
+          img.classList.remove('hidden');
+          document.getElementById('featured-placeholder').style.display = 'none';
+        } else {
+          document.getElementById('featured-image').classList.add('hidden');
+          document.getElementById('featured-placeholder').style.display = 'block';
+        }
+        document.getElementById('featured-caption').textContent = fCap;
+
+        // weekly
+        document.getElementById('week1-date').textContent = document.getElementById('admin_week_date').value;
+        document.getElementById('week1-topic').textContent = document.getElementById('admin_week_topic').value;
+        document.getElementById('week1-big-idea').textContent = document.getElementById('admin_week_big').value;
+        document.getElementById('week1-evidence').textContent = document.getElementById('admin_week_evidence').value;
+        document.getElementById('week1-practice').textContent = document.getElementById('admin_week_practice').value;
+        document.getElementById('week1-logistics').textContent = document.getElementById('admin_week_logistics').value;
+
+        // resources
+        document.getElementById('resource1-title').textContent = document.getElementById('admin_r1_title').value;
+        document.getElementById('resource1-description').textContent = document.getElementById('admin_r1_desc').value;
+        document.getElementById('resource1-link').href = document.getElementById('admin_r1_url').value || '#';
+
+        document.getElementById('resource2-title').textContent = document.getElementById('admin_r2_title').value;
+        document.getElementById('resource2-description').textContent = document.getElementById('admin_r2_desc').value;
+        document.getElementById('resource2-link').href = document.getElementById('admin_r2_url').value || '#';
+
+        // contact & misc
+        document.getElementById('contact-text').textContent = document.getElementById('admin_contact_text').value;
+        document.getElementById('contact-description').textContent = document.getElementById('admin_contact_desc').value;
+        document.getElementById('grade-level').textContent = document.getElementById('admin_grade_level').value;
+        document.getElementById('home-subtitle').textContent = document.getElementById('admin_home_subtitle').value;
+
+        alert('Changes applied locally. To make them visible to parents, click "Copy Row for Sheet" and paste into your Google Sheet as the next row.');
+      };
+
+      document.getElementById('admin_copy').onclick = async () => {
+        // Build CSV row matching sheet header order (must match your sheet header order)
+        // Order used here:
+        // featured_image_url,featured_caption,week_date,week_topic,week_big_idea,week_evidence,week_practice,week_logistics,
+        // resource1_title,resource1_description,resource1_url,resource2_title,resource2_description,resource2_url,contact_text,contact_description,grade_level,home_subtitle
+
+        const vals = [
+          document.getElementById('admin_featured_image_url').value,
+          document.getElementById('admin_featured_caption').value,
+          document.getElementById('admin_week_date').value,
+          document.getElementById('admin_week_topic').value,
+          document.getElementById('admin_week_big').value,
+          document.getElementById('admin_week_evidence').value,
+          document.getElementById('admin_week_practice').value,
+          document.getElementById('admin_week_logistics').value,
+          document.getElementById('admin_r1_title').value,
+          document.getElementById('admin_r1_desc').value,
+          document.getElementById('admin_r1_url').value,
+          document.getElementById('admin_r2_title').value,
+          document.getElementById('admin_r2_desc').value,
+          document.getElementById('admin_r2_url').value,
+          document.getElementById('admin_contact_text').value,
+          document.getElementById('admin_contact_desc').value,
+          document.getElementById('admin_grade_level').value,
+          document.getElementById('admin_home_subtitle').value
+        ];
+
+        // Escape CSV values (wrap in quotes and double-up existing quotes)
+        const escapeCSV = (s) => `"${(s || '').replace(/"/g,'""')}"`;
+        const csvRow = vals.map(escapeCSV).join(',');
+
+        try {
+          await navigator.clipboard.writeText(csvRow);
+          alert('CSV row copied to clipboard. Paste it into the next empty row in your Google Sheet.');
+        } catch (e) {
+          // fallback
+          const ta = document.createElement('textarea');
+          ta.value = csvRow;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          alert('Copied (fallback). Paste into your Google Sheet.');
+        }
+      };
+    }
+  </script>
+</body>
+</html>
